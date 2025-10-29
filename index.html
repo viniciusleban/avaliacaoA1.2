@@ -48,7 +48,29 @@
                 <p>Clique em um país acima para ver os detalhes aqui.</p>
             </div>
         </section>
+        <button type="button" class="btn btn-primary shadow" data-bs-toggle="modal" data-bs-target="#modalLogs">
+            Logs de interação
+        </button>
     </main>
+    <div class="modal fade" id="modalLogs" tabindex="-1" aria-labelledby="modalLogsLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLogsLabel">Visualização de Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="logsStatus" class="mb-2"></div>
+                <div id="listaLogs" class="list-group" style="max-height: 50vh; overflow:auto;"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Concluído</button>
+            </div>
+            </div>
+        </div>
+    </div>
     <footer class="text-center">
         <div class="container">
             <p>Desenvolvido por Vinicius Leban</p>
@@ -61,7 +83,106 @@
     </button>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
+
+    <script>
+        const codMatricula = '387747';
+        const apiPiway = 'https://www.piway.com.br/unoesc/api';
+        const apiNome = 'REST Countries';
+        const modalLogs = document.getElementById('modalLogs');
+        const listaLogs = document.getElementById('listaLogs');
+        const logsStatus = document.getElementById('logsStatus');
+        const formInserirLog = document.getElementById('formInserirLog');
+        const inputMetodo = document.getElementById('inputMetodo');
+        const inputResultado = document.getElementById('inputResultado');
+
+        modalLogs.addEventListener('show.bs.modal', exibirLogs);
+
+        async function exibirLogs() {
+            logsStatus.innerHTML = '<div class="text-muted">Carregando logs...</div>';
+            listaLogs.innerHTML = '';
+            try {
+                const res = await fetch(`${apiPiway}/logs/${codMatricula}`);
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error('Erro na requisição');
+                }
+
+                if (!Array.isArray(data)) {
+                    logsStatus.innerHTML = `<div class="alert alert-warning p-2">Resposta inesperada: ${JSON.stringify(data)}</div>`;
+                    return;
+                }
+
+                if (data.length === 0) {
+                    logsStatus.innerHTML = '<div class="text-muted">Nenhum log encontrado.</div>';
+                    return;
+                }
+
+                logsStatus.innerHTML = `<div class="text-muted">Total: ${data.length} logs</div>`;
+                data.forEach(log => {
+                    const item = document.createElement('div');
+                    const div = document.createElement('div');
+                    const botoes = document.createElement('div');
+                    const botaoDelete = document.createElement('button');
+
+                    item.className = 'list-group-item d-flex justify-content-between align-items-start';
+                    div.innerHTML = `<div><strong>API ${log.descapi}</strong></div>
+                                     <div class="text-muted small">Id: ${log.id}</div>
+                                     <div class="text-muted small">Método: "${log.descmetodo}"</div>
+                                     <div class="text-muted small">Resultado: ${log.descresultado}</div>
+                                     <div class="text-muted small">Data: ${new Date(log.desclog).toLocaleString()}</div>`;
+
+                    botoes.className = 'btn-group btn-group-sm';
+                    botaoDelete.className = 'btn btn-danger';
+                    botaoDelete.innerHTML = '<i class="bi bi-trash"></i>';
+                    botaoDelete.title = 'Excluir log';
+                    botaoDelete.onclick = () => {
+                        if (confirm(`Deseja excluir o log de id ${log.id}?`)) {
+                            excluirLog(log.id);
+                        }
+                    };
+
+                    botoes.appendChild(botaoDelete);
+                    item.appendChild(div);
+                    item.appendChild(botoes);
+                    listaLogs.appendChild(item);
+                });
+            } catch (err) {
+                logsStatus.innerHTML = `<div class="alert alert-danger p-2">Erro ao carregar logs: ${err.message}</div>`;
+            }
+        }
+
+        async function inserirLog(metodo, resultado) {
+            logsStatus.innerHTML = '<div class="text-muted">Inserindo log...</div>';
+            const url = `${apiPiway}/inserir/log/${codMatricula}/${encodeURIComponent(apiNome)}/${encodeURIComponent(metodo)}/${encodeURIComponent(resultado)}`;
+            try {
+                const res = await fetch(url);
+                if (!res.ok) {
+                    throw new Error('Erro na requisição de inserção');
+                }
+
+                const text = await res.text();
+                logsStatus.innerHTML = `<div class="alert alert-success p-2">${text}</div>`;
+                await exibirLogs();
+            } catch (err) {
+                logsStatus.innerHTML = `<div class="alert alert-danger p-2">Erro ao inserir log: ${err.message}</div>`;
+            }
+        }
+
+        async function excluirLog(id) {
+            logsStatus.innerHTML = '<div class="text-muted">Excluindo log...</div>';
+            const url = `${apiPiway}/excluir/log/${id}/aluno/${codMatricula}`;
+            try {
+                const res = await fetch(url);
+                if (!res.ok) {
+                    throw new Error('Erro na requisição de exclusão');
+                }
+
+                const text = await res.text();
+                logsStatus.innerHTML = `<div class="alert alert-success p-2">${text}</div>`;
+                await exibirLogs();
+            } catch (err) {
+                logsStatus.innerHTML = `<div class="alert alert-danger p-2">Erro ao excluir log: ${err.message}</div>`;
+            }
+        }
+    </script>
 </html>
-
-
-

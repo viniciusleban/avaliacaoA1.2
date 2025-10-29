@@ -1,9 +1,9 @@
 const URL_BASE_API = "https://restcountries.com/v3.1/"; 
 const CAMPOS_NECESSARIOS = 'name,translations,capital,region,subregion,population,currencies,languages,flags,cca3';
 
-// DICIONÁRIO DE TRADUÇÃO EMBUTIDO (EXPANDIDO )
+// DICIONÁRIO DE TRADUÇÃO JÁ QUE A API NAO TRAZ OS DADOS TRADUZIDOS
 const TRADUCOES = {
-    // REGIÕES e SUB-REGIÕES
+    // REGIÕES
     'Africa': 'África', 'Americas': 'Américas', 'Asia': 'Ásia', 'Europe': 'Europa', 'Oceania': 'Oceania', 'Antarctic': 'Antártida',
     'Southern Europe': 'Sul da Europa', 'Western Europe': 'Europa Ocidental', 'Northern Europe': 'Norte da Europa', 'Central Europe': 'Europa Central', 'Eastern Europe': 'Europa Oriental', 'South-Eastern Europe': 'Sudeste Europeu',
     'South America': 'América do Sul', 'North America': 'América do Norte', 'Central America': 'América Central', 'Caribbean': 'Caribe',
@@ -67,8 +67,8 @@ async function buscarTodosPaises() {
         }
 
         todosPaises = await resposta.json();
-        
         ordenarEExibirPaises(todosPaises);
+        inserirLog("all?fields", "Busca todos os 250 países da API");
     } catch (erro) {
         console.error("Erro ao buscar todos os países:", erro);
         listaPaises.innerHTML = '<p class="text-danger">Erro ao carregar a lista de países. Verifique a conexão ou o console para detalhes.</p>';
@@ -138,6 +138,7 @@ async function buscarDetalhesPaisPorNome(nome) {
 
     try {
         const resposta = await fetch(url);
+        inserirLog("name", "Busca detalhes completos do país - " + nome);
         
         if (!resposta.ok) {
             const urlParcial = `${URL_BASE_API}name/${encodeURIComponent(nome)}?fields=${CAMPOS_NECESSARIOS}`;
@@ -149,6 +150,7 @@ async function buscarDetalhesPaisPorNome(nome) {
             }
             const dadosParciais = await respostaParcial.json();
             exibirDetalhesPais(dadosParciais[0]);
+        inserirLog("name", "Busca detalhes parciais do país - " + nome);
             return;
         }
         
